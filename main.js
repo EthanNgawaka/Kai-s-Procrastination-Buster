@@ -378,7 +378,6 @@ failRestY = windowH+100;
 failTargetY = windowH*0.1;
 let failTimer = 0;
 switch_to_menu();
-end_game();
 
 let goToMenu = false;
 let prev_time = 0;
