@@ -21,6 +21,7 @@ let titleBg = new image("./assets/imgs/bg/torn_paper.png");
 let introImg = new image("./assets/imgs/lex/intro.png");
 let failImg = new image("./assets/imgs/lex/try_again.png");
 let correctImg = new image("./assets/imgs/lex/congrats.png");
+let endImg = new image("./assets/imgs/lex/end.png");
 
 class Confetti{
 	constructor(x,y,theta,speed,prnt){
@@ -63,8 +64,18 @@ class ConfettiManager{
 	del(obj){
 		this.toRm.push(obj);
 	}
+	spawn_confetti_rain(){
+		this.confetti.push(new Confetti(
+			random(0,windowW), -50, //x, y
+			Math.PI/2, // theta
+			random(1, 2), this, //speed, parent
+		));
+	}
 	spawn_confetti(){
-		this.confetti.push(new Confetti(windowW/2, windowH*1.2, (0.5+random(-0.125,0.125))*Math.PI, random(10,30), this));
+		this.confetti.push(new Confetti(windowW/2, windowH*1.2, (0.5+random(-0.125,0.125))*Math.PI, random(0,40), this));
+	}
+	rain(){
+		this.spawn_confetti_rain();
 	}
 	blast(amtn){
 		for(let i = 0; i < amtn; i++){
@@ -132,6 +143,11 @@ function end_game(){
 	//switch_to_menu(); // temp
 	scene = "end";
 	buttons = {};
+	buttons["exit"] = new ExitButton();
+	buttons["reload"] = new ReloadButton();
+	if(score > highScore){
+		highScore=score;
+	}
 }
 
 shouldDoNewRound = false;
@@ -154,7 +170,7 @@ function new_round(){
 function correct_order(){
 	shouldDoNewRound = true;
 	transTimer = transTimerMax;
-	conf_man.blast(100);
+	conf_man.blast(200);
 	score += 5 * 100;
 	score += 50 * Math.round(timer);
 	return;
@@ -179,13 +195,33 @@ class ValidateButton extends Button{
 		failTimer = 0;
 	}
 }
+class ExitButton extends Button{
+	constructor(list){
+		super([240,410,100,100], "blue", "exit");
+		this.list = list;
+	}
+
+	onPress(){
+		transTimer = transThresh;
+		goToMenu = true;
+	}
+}
+
+class ReloadButton extends Button{
+	constructor(list){
+		super([140,410,100,100], "blue", "retry");
+		this.list = list;
+	}
+
+	onPress(){
+		switch_to_main();
+	}
+}
 
 class RetryButton extends Button{
 	constructor(list){
 		super([140,410,100,100], "blue", "retry");
 		this.list = list;
-		this.img = new image("./assets/imgs/ui/retry.png");
-		this.selected_img = new image("./assets/imgs/ui/retry_selected.png");
 	}
 
 
@@ -237,15 +273,18 @@ class SortButton extends Button{
 
 beginGame = false;
 function switch_to_main(){
+	goToMenu = false;
 	transTimer = transThresh;
 	shouldDoNewRound = true;
 	beginGame = true;
+	timer = maxTimer;
 }
 
 function setup_start_vars(){
 	round = 1;
 	timer = maxTimer;
 	buttons = {};
+	score = 0;
 	// debug
 	//buttons['debug'] = new SortButton();
 	//
@@ -264,8 +303,6 @@ function switch_to_menu(){
 	scene = "menu";
 	mouse.button.left = false;
 }
-
-switch_to_menu();
 
 let display_score = 0;
 let clock = new image("./assets/imgs/bg/clock.png");
@@ -312,12 +349,21 @@ function draw_menu(){
 	titleBg.drawImg(windowW/2 - 475, 20, 950, 150, 1);
 	showText("Kai's Procrastination Buster", windowW/2, 110, 65, "black", true, true, "Delicious Handrawn");
 
-	introImg.drawImg(windowW*0.3, windowH*0.3, windowW*0.7, windowH*0.8, 1);
+	introImg.drawImg(windowW*0.45, windowH*0.3, windowW*0.6, windowH*0.8, 1);
+
+	bgRect = [25,windowH*0.35,windowW*0.4,150];
+	drawRect(enlargeRect(bgRect, 1.1, 1.1), "white");
+	drawRect(bgRect, "black");
+	showText("HIGHSCORE:", 40, windowH *0.45, 50, "white", false, false, "Orbitron", "left");
+	showText(highScore, 215, windowH*0.45+50, 50, "white", false, false, "Orbitron", "center");
 }
 function update_menu(){
 }
 
 function draw_end(){
+	endImg.drawImg(-200,50,windowW*1.2,windowH,1);
+	conf_man.rain();
+	conf_man.draw();
 }
 function update_end(){
 }
@@ -331,7 +377,10 @@ failRect = [0.7*windowW*0.4, windowH, 1.2*windowW*0.6, 1.2*windowH*0.8];
 failRestY = windowH+100;
 failTargetY = windowH*0.1;
 let failTimer = 0;
+switch_to_menu();
+end_game();
 
+let goToMenu = false;
 let prev_time = 0;
 function main(curr_time){
 	if(prev_time == 0){ prev_time = curr_time; }
@@ -373,8 +422,14 @@ function main(curr_time){
 	}
 	conf_man.update();
 	transTimer -= dt/1000;
-	if(transTimer <= transThresh/2 && shouldDoNewRound){
-		new_round();
+	if(transTimer <= transThresh/2){
+		if(shouldDoNewRound){
+			new_round();
+		}
+		else if(goToMenu){
+			goToMenu = false;
+			switch_to_menu();
+		}
 	}
 
 	// draw
