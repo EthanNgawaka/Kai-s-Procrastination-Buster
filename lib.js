@@ -534,7 +534,6 @@ let sfx = {
 		autoplay:true,
 		loop:true,
 		volume:0.3,
-		html5: true,
 	}),
 	select: new Howl({src:["./assets/audio/select.ogg"], volume:2}),
 	click: new Howl({src:["./assets/audio/click.ogg"], volume:0.5}),

@@ -471,7 +471,9 @@ function main(curr_time){
 	oldKeys = {...keys};
 
 	requestAnimationFrame(main);
-	onResize();
+	if(window.mobileCheck()){
+		onResize();
+	}
 	if(window.innerHeight > window.innerWidth){
 		rotate.drawImg(windowW/2 - 150/sf[0],windowH/2 - 150/sf[1],300/sf[0],300/sf[1],1);
 	}
