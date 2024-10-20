@@ -10,6 +10,9 @@ class Entry{
 		this.targetRect = this.rect;
 
 		this.box = new image("./assets/imgs/ui/button.png");
+		this.prevCol = false;
+		this.confirmation = true;
+		this.flick = false;
 	}
 
 	update(){
@@ -17,11 +20,20 @@ class Entry{
 			let t = 0.2;
 			this.rect[0] = lerp(this.rect[0], this.targetRect[0], t);
 			this.rect[1] = lerp(this.rect[1], this.targetRect[1], t);
+			if(Math.abs(this.rect[1] - this.targetRect[1]) > 1){
+				if(!this.flick && transTimer <= transThresh/4){
+					this.flick = true;
+					sfx.select.play()
+				}
+			}else{
+				this.flick = false;
+			}
 		}
 
 		if(!this.parent.draggedObj){
 			let collision = AABBCollision(this.rect, [mouse.x,mouse.y,0,0]);
 			if(collision && mouse.button.left){
+				sfx.click.play();
 				this.parent.draggedObj = this;
 				this.oldMousePos = [mouse.x, mouse.y];
 			}
@@ -35,6 +47,7 @@ class Entry{
 
 		if(!mouse.button.left){
 			this.parent.draggedObj = null;
+			this.confirmation = false;
 		}
 	}
 
@@ -48,13 +61,15 @@ class Entry{
 	draw(){
 		//drawRect(this.rect);
 		let collision = AABBCollision(this.rect, [mouse.x,mouse.y,0,0]);
-		let drawing_rect = this.rect
+		let drawing_rect = this.rect;
 		if(this.parent.shake > 0){
 			drawing_rect = add_rect(drawing_rect, [random(-this.parent.shakeIntensity, this.parent.shakeIntensity), random(-this.parent.shakeIntensity, this.parent.shakeIntensity)]);
 			this.parent.shake -= 1;
 		}
 		let size = 1;
+		let comparison_rect = drawing_rect;
 		if(collision && (!this.parent.draggedObj || this.parent.draggedObj==this)){
+			if(!this.prevCol){ sfx.select.play(); }
 			drawing_rect = enlargeRect(this.rect, 1.05, 1.05);
 			size = 1.05;
 		}
@@ -64,6 +79,22 @@ class Entry{
 		this.box.drawImg(...drawing_rect, 1);
 		showText(this.text, drawing_rect[0]+drawing_rect[2]/2, drawing_rect[1]+drawing_rect[3]/1.5, 30*size, "black", false, false, "Delicious Handrawn");
 
+		if(
+			this.parent.draggedObj != this && 
+			this.parent.mode == "easy" &&
+			this.index == this.debugIndex &&
+			comparison_rect[1] == this.rect[1] &&
+			comparison_rect[0] == this.rect[0] &&
+			!("retry" in buttons)
+		){
+			if(!this.confirmation){
+				this.confirmation = true;
+				sfx.confirmation.play();
+			}
+			drawGlowRect(drawing_rect, "#00ff08");
+		}
+
+		this.prevCol = collision;
 
 		// debug showText(this.debugIndex, this.rect[0]-100, this.rect[1]+this.rect[3]/1.5, 20, "black");
 	}

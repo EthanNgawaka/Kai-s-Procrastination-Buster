@@ -519,3 +519,25 @@ function showText(text, X, Y, Size, colour = "rgb(0, 0, 0)", bold = false, strok
 	}
 	c.restore();
 }
+
+// audio shit
+let sfx = {
+	bg_music: new Howl({
+		src:["./assets/audio/bg_music.ogg"],
+		autoplay:true,
+		loop:true,
+		volume:0.3,
+	}),
+	select: new Howl({src:["./assets/audio/select.ogg"], volume:2}),
+	click: new Howl({src:["./assets/audio/click.ogg"], volume:0.5}),
+	confirmation: new Howl({src:["./assets/audio/confirmation.ogg"], volume:0.2}),
+	fail: new Howl({src:["./assets/audio/fail.ogg"], volume:0.2}),
+	pop: new Howl({src:["./assets/audio/pop.ogg"]}),
+	woosh: new Howl({src:["./assets/audio/woosh.ogg"], volume: 0.4}),
+}
+
+//
+let buttons = {};
+let transTimer = 0;
+let transTimerMax = 8;
+let transThresh = 2;

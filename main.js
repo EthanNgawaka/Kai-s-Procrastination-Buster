@@ -1,19 +1,15 @@
-let buttons = {};
 let scene = "";
 
-const list_rect = [windowW/2 - 300, 180, 600, 400];
+const list_rect = [windowW/2 - windowW/4, 180, windowW/2, 2*windowW/6];
 let mainList = new List(list_rect);
 mainList.populate_from_rand_array(tasks);
 
 let timer = 0;
 let maxTimer = 0;
-let easyMaxTimer = 30;
-let advancedMaxTimer = 20;
+let easyMaxTimer = 60;
+let advancedMaxTimer = 40;
 let round = 1;
 
-let transTimer = 0;
-let transTimerMax = 8;
-let transThresh = 2;
 let score = 0;
 let highScore = 0;
 
@@ -108,6 +104,7 @@ class Button{
 		this.col = col;
 		this.text = text;
 		this.oldMouseDown = false;
+		this.prevCol = false;
 
 		try{
 			this.img = new image("./assets/imgs/ui/"+text+".png");
@@ -128,10 +125,14 @@ class Button{
 	draw(){
 		let coll = AABBCollision(enlargeRect(this.rect, 0.9, 0.9), [mouse.x, mouse.y, 0,0]);
 		if(coll){
+			if(!this.prevCol){
+				sfx.select.play();
+			}
 			this.selected_img.drawImg(...enlargeRect(this.rect, 1.05,1.05), 1);
 		}else{
 			this.img.drawImg(...this.rect, 1);
 		}
+		this.prevCol = coll;
 	}
 
 	onPress(){
@@ -170,6 +171,7 @@ function new_round(){
 function correct_order(){
 	shouldDoNewRound = true;
 	transTimer = transTimerMax;
+	sfx.pop.play();
 	conf_man.blast(200);
 	score += 5 * 100;
 	score += 50 * Math.round(timer);
@@ -190,9 +192,11 @@ class ValidateButton extends Button{
 		mainList.shake = 300;
 		mainList.shakeIntensity = 20;
 		this.list.sort_self();
+		sfx.fail.play();
 		buttons["retry"] = new RetryButton(this.list);
 		delete buttons["validate"];
 		failTimer = 0;
+		sfx.click.play();
 	}
 }
 class ExitButton extends Button{
@@ -204,6 +208,7 @@ class ExitButton extends Button{
 	onPress(){
 		transTimer = transThresh;
 		goToMenu = true;
+		sfx.click.play();
 	}
 }
 
@@ -215,6 +220,7 @@ class ReloadButton extends Button{
 
 	onPress(){
 		switch_to_main();
+		sfx.click.play();
 	}
 }
 
@@ -226,9 +232,12 @@ class RetryButton extends Button{
 
 
 	onPress(){
+		sfx.click.play();
 		this.list.retry();
+		timer = maxTimer;
 		buttons["validate"] = new ValidateButton(mainList);
 		delete buttons["retry"];
+		failRect[1] = failRestY;
 	}
 }
 class AdvancedButton extends Button{
@@ -238,6 +247,7 @@ class AdvancedButton extends Button{
 	onPress(){
 		maxTimer = advancedMaxTimer;
 		switch_to_main();
+		sfx.click.play();
 	}
 }
 class EasyButton extends Button{
@@ -247,6 +257,7 @@ class EasyButton extends Button{
 	onPress(){
 		maxTimer = easyMaxTimer;
 		switch_to_main();
+		sfx.click.play();
 		mainList.mode = 'easy'
 	}
 }
@@ -328,14 +339,14 @@ function draw_main(){
 	showText("score", scoreboardRect[0] + scoreboardRect[2]/2, scoreboardRect[1] + scoreboardRect[3]*1.2, 30, "white", false, false, "Orbitron");
 
 
-	clock.drawImg(windowW/4.5, 0, windowW/5.2, 70, 1);
+	clock.drawImg(windowW/4.5, 0, windowW/5.2, windowH*0.12, 1);
 	let num = Math.round(timer);
 
 	if(!("validate" in buttons)){
 		blinkTimer ++;
 	}
 	if("validate" in buttons || blinkTimer%100 < 50){
-		showText("00:"+String(num).padStart(2, '0'), windowW/4.5 + 40, 45, 30, "black", false, false, "Orbitron", "left");
+		showText("00:"+String(num).padStart(2, '0'), windowW/3.55, windowH*0.12/1.68, 30, "black", false, false, "Orbitron", "left");
 	}
 	//showText(num, windowW/4.5+110, 60, 45, "black", false, false, "Orbitron", "left");
 	conf_man.draw();
@@ -354,8 +365,8 @@ function draw_menu(){
 	bgRect = [25,windowH*0.35,windowW*0.4,150];
 	drawRect(enlargeRect(bgRect, 1.1, 1.1), "white");
 	drawRect(bgRect, "black");
-	showText("HIGHSCORE:", 40, windowH *0.45, 50, "white", false, false, "Orbitron", "left");
-	showText(highScore, 215, windowH*0.45+50, 50, "white", false, false, "Orbitron", "center");
+	showText("HIGHSCORE:", bgRect[0]*5, windowH *0.45, 50, "white", false, false, "Orbitron", "left");
+	showText(highScore, bgRect[0]*5*2.35, windowH*0.45+50, 50, "white", false, false, "Orbitron", "center");
 }
 function update_menu(){
 }
@@ -436,12 +447,19 @@ function main(curr_time){
 		draw_main();
 		correctImg.drawImg(...correctRect, 1);
 		failImg.drawImg(...failRect, 1);
-		if("retry" in buttons && failTimer < 5){ // if retrying
-			failRect[1] = lerp(failRect[1], failTargetY, 0.1);
+		if("retry" in buttons){ // if retrying
+			if(failTimer < 7 && failTimer > 1.5){
+				let playSound = (Math.abs(failRect[1] - failRestY) < 1);
+				if(playSound){ sfx.woosh.play(); }
+				failRect[1] = lerp(failRect[1], failTargetY, 0.1);
+			}else{
+				playSound = (Math.abs(failRect[1] - failTargetY) < 1);
+				if(playSound){ sfx.woosh.play(); }
+				failRect[1] = lerp(failRect[1], failRestY, 0.1);
+			}
+
 			failTimer += dt/1000;
-		}else{
-			failRect[1] = lerp(failRect[1], failRestY, 0.1);
-		}
+		}	
 	}else if(scene == "menu"){
 		draw_menu();
 	}else if(scene == "end"){
