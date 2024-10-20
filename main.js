@@ -18,6 +18,22 @@ let introImg = new image("./assets/imgs/lex/intro.png");
 let failImg = new image("./assets/imgs/lex/try_again.png");
 let correctImg = new image("./assets/imgs/lex/congrats.png");
 let endImg = new image("./assets/imgs/lex/end.png");
+let rotate = new image('./assets/imgs/ui/rotate.png');
+
+//mobile formatting
+
+function onResize(){
+	canvas.style.width = "92.5vw"
+	canvas.style.height = "90vh"
+	sf[0] = window.innerWidth/windowW;
+	sf[1] = window.innerHeight/windowH;
+}
+
+if(window.mobileCheck()){
+	document.addEventListener('orientationchange', onResize);
+	onResize();
+}
+//
 
 class Confetti{
 	constructor(x,y,theta,speed,prnt){
@@ -262,26 +278,6 @@ class EasyButton extends Button{
 	}
 }
 
-class SortButton extends Button{
-	constructor(){
-		super([windowW*0.25 - 200, windowH/2, 100, 40], "green", "easy");
-	}
-	draw(){
-		let collision = AABBCollision(this.rect, [mouse.x, mouse.y, 0, 0]);
-		if(collision){
-			drawRect(enlargeRect(this.rect, 1.25, 1.25), this.col);
-			drawRect(enlargeRect(this.rect, 1.25, 1.25), "white", 0, 0, 1, 10);
-			showText(this.text, this.rect[0]+this.rect[2]/2, this.rect[1]+this.rect[3]/2, 1.25*this.rect[2]/5, "black", true);
-		}else{
-			drawRect(this.rect, this.col);
-			showText(this.text, this.rect[0]+this.rect[2]/2, this.rect[1]+this.rect[3]/2, this.rect[2]/5, "white", true);
-		}
-	}
-	onPress(){
-		mainList.sort_self();
-	}
-}
-
 beginGame = false;
 function switch_to_main(){
 	goToMenu = false;
@@ -475,6 +471,10 @@ function main(curr_time){
 	oldKeys = {...keys};
 
 	requestAnimationFrame(main);
+	onResize();
+	if(window.innerHeight > window.innerWidth){
+		rotate.drawImg(windowW/2 - 150/sf[0],windowH/2 - 150/sf[1],300/sf[0],300/sf[1],1);
+	}
 }
 
 requestAnimationFrame(main);

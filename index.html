@@ -23,15 +23,34 @@
 		  font-weight: 400;
 		  font-style: normal;
 		}
+		body::before {
+			overflow:hidden;
+			content: '';
+			position: fixed; /* Fix it to the viewport */
+			top: -5vh;
+			left: -5vw;
+			width: 110vw; /* Full width */
+			height: 110vh; /* Full height */
+			background-image: url('./assets/imgs/bg/room.png'); /* Replace with your image path */
+			background-size: cover; /* Cover the entire background */
+			background-position: center; /* Center the background image */
+			background-repeat: no-repeat; /* Prevent tiling */
+			filter: blur(16px); /* Adjust blur amount as needed */
+			z-index: 0; /* Send it to the back */
+		}
         canvas {
-            border: 1px solid black;
 			padding-left: 0;
 			padding-right: 0;
 			margin-left: auto;
 			margin-right: auto;
 			display: block;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%); /* Center the canvas */
         }
     </style>
+	<link rel="icon" type="image/x-icon" href="./assets/imgs/kai/icon.png">
 </head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.5.0/math.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
