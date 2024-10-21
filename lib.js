@@ -240,9 +240,9 @@ class image{
 
 	drawRotatedImg(X, Y, W, H, alpha, rotation, rotateAroundX = 0, rotateAroundY = 0){
 		c.save();
-		c.translate(X, Y);
+		c.translate(X+W/2, Y+H/2);
 		c.rotate(rotation);
-		this.drawImg(-rotateAroundX, -rotateAroundY, W, H, alpha);
+		this.drawImg(-W/2, -H/2, W, H, alpha);
 		c.restore();
 	}
 }

@@ -132,7 +132,7 @@ class Button{
 	update(){
 		let collision = AABBCollision(this.rect, [mouse.x, mouse.y, 0, 0]);
 		let pressed = !this.oldMouseDown && mouse.button.left;
-		if(collision && pressed){
+		if(collision && pressed && mainList.animationTimer <= 0){
 			this.onPress();
 		}
 
@@ -171,7 +171,6 @@ shouldDoNewRound = false;
 let blinkTimer = 0;
 
 function new_round(){
-	mainList.populate_from_rand_array(tasks);
 	timer = maxTimer - 5*round;
 	round ++;
 	if(round > 3){
@@ -182,6 +181,7 @@ function new_round(){
 		beginGame = false;
 		setup_start_vars();
 	}
+	mainList.populate_from_rand_array(tasks);
 }
 
 function correct_order(){
@@ -280,6 +280,7 @@ class EasyButton extends Button{
 
 beginGame = false;
 function switch_to_main(){
+	conf_man.confetti = [];
 	goToMenu = false;
 	transTimer = transThresh;
 	shouldDoNewRound = true;
@@ -295,14 +296,16 @@ function setup_start_vars(){
 	// debug
 	//buttons['debug'] = new SortButton();
 	//
-	mainList = new List(list_rect);
-	mainList.populate_from_rand_array(tasks);
+	if(mainList.previous_tasks.length >= 15){
+		mainList = new List(list_rect);
+	}
 	buttons["validate"] = new ValidateButton(mainList);
 	scene = "main";
 	mouse.button.left = false;
 }
 
 function switch_to_menu(){
+	conf_man.confetti = [];
 	mainList.mode = "";
 	buttons = {};
 	buttons["Easy"] = new EasyButton();
@@ -313,8 +316,8 @@ function switch_to_menu(){
 
 let display_score = 0;
 let clock = new image("./assets/imgs/bg/clock.png");
-function draw_main(){
-	mainList.draw();
+function draw_main(dt){
+	mainList.draw(dt);
 	drawCircle([windowW*0.49, 55], 50, "white"); 
 	drawCircle([windowW*0.49, 55], 40, "black"); 
 	showText(round, windowW*0.49, 70, 50, "white", true);
@@ -402,7 +405,7 @@ function main(curr_time){
 	if(transTimer <= transThresh/2){
 		if(scene == "main"){
 			update_main();
-			if(transTimer <= 0 && "validate" in buttons){
+			if(transTimer <= 0 && "validate" in buttons && mainList.animationTimer <= 0){
 				timer -= dt/1000;
 			}
 			if(timer <= 0){
@@ -440,7 +443,7 @@ function main(curr_time){
 
 	// draw
 	if(scene == "main"){
-		draw_main();
+		draw_main(dt);
 		correctImg.drawImg(...correctRect, 1);
 		failImg.drawImg(...failRect, 1);
 		if("retry" in buttons){ // if retrying

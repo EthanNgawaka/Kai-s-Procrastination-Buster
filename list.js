@@ -5,7 +5,7 @@ class Entry{
 		this.index = startingIndex;
 		this.debugIndex = actualIndex;
 
-		this.rect = [this.parent.rect[0]+this.parent.rect[2]*0.125,this.parent.rect[1]+30+this.index*30,0,0];
+		this.rect = [this.parent.rect[0]+this.parent.rect[2]*0.125,this.parent.rect[1]+this.parent.rect[3]/2+this.index,0,0];
 		this.oldMousePos = [null, null];
 		this.targetRect = this.rect;
 
@@ -17,7 +17,7 @@ class Entry{
 
 	update(){
 		if(this.parent.draggedObj != this){
-			let t = 0.2;
+			let t = 0.1;
 			this.rect[0] = lerp(this.rect[0], this.targetRect[0], t);
 			this.rect[1] = lerp(this.rect[1], this.targetRect[1], t);
 			if(Math.abs(this.rect[1] - this.targetRect[1]) > 1){
@@ -115,6 +115,12 @@ class List{
 		this.shakeIntensity = 1;
 		this.mode = '';
 		this.titleBg = new image("./assets/imgs/bg/torn_paper.png");
+
+		this.animationTimer = 0;
+		this.animationTimerMax = 5.5;
+		this.startOfRound = false;
+		this.animationLerpFact = 0;
+		this.deg = 0;
 	}
 
 	get_entry_from_text(string){
@@ -174,18 +180,27 @@ class List{
 			mod_rand = arrayRemove(mod_rand, prev_task);
 		}
 		this.task = mod_rand[random(0, mod_rand.length-1, true)];
+		if(!this.task){
+			console.log(mod_rand);
+			this.previous_tasks = [];
+			this.populate_from_rand_array(rand_list);
+			return;
+		}
 		let chosen_list = this.task.subtasks;
 
 		this.shuffle(chosen_list);
 		this.snap_to_list();
+		this.startOfRound = true;
 	}
 	update(){
-		for(let entry of this.entries){
-			entry.update();
-		}
+		if(this.animationTimer <= 0){
+			for(let entry of this.entries){
+				entry.update();
+			}
 
-		if(this.draggedObj){
-			this.draggedObj.drag();
+			if(this.draggedObj){
+				this.draggedObj.drag();
+			}
 		}
 	}
 
@@ -223,11 +238,16 @@ class List{
 		}
 	}
 
-	draw(){
+	draw(dt){
 		//drawRect(this.rect, "gray");
 		let drawingRect = enlargeRect(this.rect, 1.75, 1.5);
 		this.notebook.drawImg(...drawingRect, 1);
 		this.snap_to_list();
+
+		if(this.startOfRound){
+			this.startOfRound = false;
+			this.animationTimer = this.animationTimerMax;
+		}
 
 		let drawOrder = this.entries;
 		if(this.draggedObj){
@@ -238,11 +258,30 @@ class List{
 		let title_rect = [...this.rect];
 		title_rect[3] = 60;
 		title_rect[1] -= 65;
-		this.titleBg.drawImg(...title_rect, 1);
-		showText("task: " + this.task.name, title_rect[0]+title_rect[2]/2,title_rect[1]+title_rect[3]/1.4, 40, "black" , false, false, "Delicious Handrawn");
+		title_rect[1] += this.rect[3]/2*this.animationLerpFact
 
-		for(let i of drawOrder){
-			i.draw();
+		let growth = lerpFunc((this.animationTimer-this.animationTimerMax/3)*2/this.animationTimerMax);
+		title_rect = enlargeRect(title_rect, 1+growth/5, 1+this.animationLerpFact*2);
+
+		let angle2 = Math.PI/12 * Math.sin(this.deg); 
+		let used_angle = 0;
+		if(this.deg > 0){
+			used_angle = angle2;
+		}
+
+		this.titleBg.drawRotatedImg(...title_rect, 1, used_angle);
+		showText("task: " + this.task.name, title_rect[0]+title_rect[2]/2,title_rect[1]+title_rect[3]/(1.4 + 0.6*this.animationLerpFact), 40+10*this.animationLerpFact+10*growth, "black" , false, false, "Delicious Handrawn");
+
+		if(this.animationTimer <= 0){
+			for(let i of drawOrder){
+				i.draw();
+			}
+			this.animationLerpFact = lerp(this.animationLerpFact, 0, 0.1);
+			this.deg = lerp(this.deg, 16*Math.PI/2, 0.1);
+		}else{
+			this.deg = 0;
+			this.animationLerpFact = 1;
+			this.animationTimer -= dt/1000;
 		}
 	}
 }
